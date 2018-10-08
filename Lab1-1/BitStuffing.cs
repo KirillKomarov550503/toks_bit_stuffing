@@ -17,7 +17,7 @@ namespace Lab1_1
             }
             Console.WriteLine("\n_________________________________________");
         }
-        private static byte[] ConvertBinaryStrToByteArray(string binaryStr)
+        public static byte[] ConvertBinaryStrToByteArray(string binaryStr)
         {
 
             int remainder = binaryStr.Length % 8;
@@ -37,7 +37,7 @@ namespace Lab1_1
             }
             return bytes;
         }
-        private static string ConvertBytesToBinaryString(byte[] bytes)
+        public static string ConvertBytesToBinaryString(byte[] bytes)
         {
             string bits = "";
             foreach (byte bt in bytes)

@@ -45,14 +45,16 @@ namespace Lab1_1
         }
 
         private Boolean xOn = false;
-        
+
         private byte[] CreatePackage(string message)
         {
             byte flag = Convert.ToByte("01011010", 2);
-
+            byte destinationAddres = Convert.ToByte("00000000", 2);
+            byte sourceAddres = Convert.ToByte("00000000", 2);
             byte[] bytesSent = System.Text.Encoding.ASCII.GetBytes(message);
-
-            if (bytesSent.Length > 255)
+            byte[] dataAfterStuffing = BitStuffing.CodeData(bytesSent);
+            byte dataSize = (byte)dataAfterStuffing.Length;
+            if (dataSize > 255)
             {
                 this.Invoke((MethodInvoker)(delegate
                 {
@@ -60,16 +62,53 @@ namespace Lab1_1
                 }));
                 return null;
             }
-            
-            byte dataSize = Convert.ToByte(Convert.ToString(bytesSent.Length));
-            byte[] dataAfterStuffing = BitStuffing.CodeData(bytesSent);
-           /* var firstPart = new byte[] { flag, dataSize };
-            var package = new MemoryStream(new byte[firstPart.Length + bytesSent.Length], 0, firstPart.Length + bytesSent.Length, true, true);
-            package.Write(firstPart, 0, firstPart.Length);
-            package.Write(bytesSent, 0, bytesSent.Length);
-            byte[] package = package.GetBuffer();
-            BitArray bitArray = new BitArray();*/
-            return new byte[] { };
+            byte fcs = Convert.ToByte("11111111", 2);
+
+            byte[] firstPart = new byte[] { flag, destinationAddres, sourceAddres, dataSize };
+            byte[] lastPart = new byte[] { fcs };
+            List<byte> firstList = new List<byte>(firstPart);
+            List<byte> middleList = new List<byte>(dataAfterStuffing);
+            List<byte> lastList = new List<byte>(lastPart);
+            firstList.AddRange(middleList);
+            firstList.AddRange(lastPart);
+            byte[] package = firstList.ToArray();
+            return package;
+        }
+
+        private byte[] ParsePackage(byte[] package)
+        {
+            byte flag;
+            if (package[0] == Convert.ToByte("01011010", 2))
+            {
+                flag = package[0];
+            }
+            byte destinationAddres = package[1];
+            byte sourceAddres = package[2];
+            byte dataSize = package[3];
+            byte[] undecodeData = new byte[dataSize];
+            for (int i = 4, j = 0; i < 4 + dataSize; i++, j++)
+            {
+                undecodeData[j] = package[i];
+            }
+            byte[] decodeData = BitStuffing.DecodeData(undecodeData);
+            byte fcs = package[package.Length - 1];
+            string fcsLine = BitStuffing.ConvertBytesToBinaryString(new byte[] { fcs });
+            int count = 0;
+            for (int i = 0; i < fcsLine.Length; i++)
+            {
+                if (fcsLine[i] == '1')
+                {
+                    count++;
+                }
+            }
+            if (count % 2 == 1)
+            {
+                this.Invoke((MethodInvoker)(delegate 
+                {
+                    listView2.Text = "Transfer bytes error";
+                }));
+            }
+            return decodeData;
         }
         private void SendData()
         {
@@ -83,7 +122,7 @@ namespace Lab1_1
             if (package != null)
             {
                 serialPort.RtsEnable = true;
-                byte[] bytesSent = System.Text.Encoding.ASCII.GetBytes(textBox1.Text);
+                byte[] bytesSent = CreatePackage(textBox1.Text);
                 serialPort.Write(bytesSent, 0, bytesSent.Length);
                 Thread.Sleep(100);
                 serialPort.RtsEnable = false;
@@ -133,7 +172,8 @@ namespace Lab1_1
                 this.Invoke((MethodInvoker)(delegate()
                 {
                     string message = serialPort.ReadExisting();
-                    byte[] bytes = System.Text.Encoding.ASCII.GetBytes(message);
+                    byte[] bytes = System.Text.Encoding.UTF8.GetBytes(message); 
+                    
                     if (bytes.Length == 1 && bytes[0] == 0x13)
                     {
                         xOn = false;
@@ -144,8 +184,9 @@ namespace Lab1_1
                     }
                     else
                     {
-                        listView2.Items.Add("Bytes recieved:" + bytes.Length);
-                        textBox2.Text += message + "\r\n";
+                        byte[] decodeData = ParsePackage(bytes);
+                        listView2.Items.Add("Bytes recieved:" + decodeData.Length);
+                        textBox2.Text += Encoding.UTF8.GetString(decodeData, 0, decodeData.Length) + "\r\n";
                     }
 
                 }));
