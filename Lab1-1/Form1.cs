@@ -9,8 +9,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO.Ports;
 using System.Threading;
-
-
+using System.Collections;
+using System.IO;
 namespace Lab1_1
 {
     public partial class
@@ -31,13 +31,9 @@ namespace Lab1_1
             label9.Text = "8";
             label3.Text = "None";
             label2.Text = "1";
-
-            listView1.Scrollable = true;
-            listView1.View = View.Details;
-            ColumnHeader columnHeader = new ColumnHeader();
-            columnHeader.Width = listView1.Width;
-            columnHeader.Text = "Output: ";
-            listView1.Columns.Add(columnHeader);
+            label11.Text = "Input:";
+            label12.Text = "Debug:";
+            textBox2.ReadOnly = true;
 
             listView2.Scrollable = true;
             listView2.View = View.Details;
@@ -45,27 +41,60 @@ namespace Lab1_1
             header2.Width = listView2.Width;
             header2.Text = "Debug information: ";
             listView2.Columns.Add(header2);
+            listView2.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
         }
 
         private Boolean xOn = false;
-        private void sendData()
+        
+        private byte[] CreatePackage(string message)
+        {
+            byte flag = Convert.ToByte("01011010", 2);
+
+            byte[] bytesSent = System.Text.Encoding.ASCII.GetBytes(message);
+
+            if (bytesSent.Length > 255)
+            {
+                this.Invoke((MethodInvoker)(delegate
+                {
+                    listView2.Items.Add("Data length more than 256 bytes");
+                }));
+                return null;
+            }
+            
+            byte dataSize = Convert.ToByte(Convert.ToString(bytesSent.Length));
+            byte[] dataAfterStuffing = BitStuffing.CodeData(bytesSent);
+           /* var firstPart = new byte[] { flag, dataSize };
+            var package = new MemoryStream(new byte[firstPart.Length + bytesSent.Length], 0, firstPart.Length + bytesSent.Length, true, true);
+            package.Write(firstPart, 0, firstPart.Length);
+            package.Write(bytesSent, 0, bytesSent.Length);
+            byte[] package = package.GetBuffer();
+            BitArray bitArray = new BitArray();*/
+            return new byte[] { };
+        }
+        private void SendData()
         {
             while (!xOn)
             {
                 Thread.Sleep(100);
             }
 
-            serialPort.RtsEnable = true;
-            serialPort.Write(textBox1.Text);
-            Thread.Sleep(100);
-            serialPort.RtsEnable = false;
 
-            byte[] bytesSent = System.Text.Encoding.ASCII.GetBytes(textBox1.Text);
-            this.Invoke((MethodInvoker)(delegate
+            byte[] package = CreatePackage(textBox1.Text);
+            if (package != null)
             {
-                textBox1.Text = "";
-                listView2.Items.Add("Bytes sent:" + bytesSent.Length);
-            }));
+                serialPort.RtsEnable = true;
+                byte[] bytesSent = System.Text.Encoding.ASCII.GetBytes(textBox1.Text);
+                serialPort.Write(bytesSent, 0, bytesSent.Length);
+                Thread.Sleep(100);
+                serialPort.RtsEnable = false;
+
+
+                this.Invoke((MethodInvoker)(delegate
+                {
+                    textBox1.Text = "";
+                    listView2.Items.Add("Bytes sent:" + bytesSent.Length);
+                }));
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -116,7 +145,7 @@ namespace Lab1_1
                     else
                     {
                         listView2.Items.Add("Bytes recieved:" + bytes.Length);
-                        listView1.Items.Add(message);
+                        textBox2.Text += message + "\r\n";
                     }
 
                 }));
@@ -129,7 +158,7 @@ namespace Lab1_1
         {
             if (serialPort.IsOpen && serialPort.BytesToRead == 0)
             {
-                Thread thread = new Thread(sendData);
+                Thread thread = new Thread(SendData);
                 thread.Start();
             }
             else listView2.Items.Add("To send message connect ports first!");
@@ -176,12 +205,6 @@ namespace Lab1_1
             }
         }
 
-        private void label9_Click(object sender, EventArgs e)
-        {
-
-        }
-
-       
     }
 }
 

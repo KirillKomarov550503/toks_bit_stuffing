@@ -39,13 +39,15 @@
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
-            this.listView1 = new System.Windows.Forms.ListView();
             this.listView2 = new System.Windows.Forms.ListView();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
+            this.textBox2 = new System.Windows.Forms.TextBox();
+            this.label11 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // textBox1
@@ -161,15 +163,6 @@
             this.label8.TabIndex = 18;
             this.label8.Text = "StopBits:";
             // 
-            // listView1
-            // 
-            this.listView1.Location = new System.Drawing.Point(16, 28);
-            this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(524, 198);
-            this.listView1.TabIndex = 23;
-            this.listView1.UseCompatibleStateImageBehavior = false;
-            this.listView1.View = System.Windows.Forms.View.List;
-            // 
             // listView2
             // 
             this.listView2.Location = new System.Drawing.Point(556, 28);
@@ -216,7 +209,6 @@
             this.label9.Size = new System.Drawing.Size(16, 17);
             this.label9.TabIndex = 28;
             this.label9.Text = "8";
-            this.label9.Click += new System.EventHandler(this.label9_Click);
             // 
             // label10
             // 
@@ -227,18 +219,47 @@
             this.label10.TabIndex = 29;
             this.label10.Text = "9600";
             // 
+            // textBox2
+            // 
+            this.textBox2.Location = new System.Drawing.Point(16, 28);
+            this.textBox2.Multiline = true;
+            this.textBox2.Name = "textBox2";
+            this.textBox2.ReadOnly = true;
+            this.textBox2.Size = new System.Drawing.Size(524, 198);
+            this.textBox2.TabIndex = 30;
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(13, 8);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(55, 17);
+            this.label11.TabIndex = 31;
+            this.label11.Text = "Output:";
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(556, 8);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(58, 17);
+            this.label12.TabIndex = 32;
+            this.label12.Text = "Debug: ";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1095, 458);
+            this.Controls.Add(this.label12);
+            this.Controls.Add(this.label11);
+            this.Controls.Add(this.textBox2);
             this.Controls.Add(this.label10);
             this.Controls.Add(this.label9);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.checkBox1);
             this.Controls.Add(this.listView2);
-            this.Controls.Add(this.listView1);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.label6);
@@ -273,13 +294,15 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.ListView listView1;
         private System.Windows.Forms.ListView listView2;
         private System.Windows.Forms.CheckBox checkBox1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.TextBox textBox2;
+        private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.Label label12;
     }
 }
 
