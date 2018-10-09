@@ -86,10 +86,13 @@ namespace Lab1_1
             byte sourceAddres = package[2];
             byte dataSize = package[3];
             byte[] undecodeData = new byte[dataSize];
+            Console.WriteLine("Parse package: ");
             for (int i = 4, j = 0; i < 4 + dataSize; i++, j++)
             {
+                Console.Write(package[i] + " ");
                 undecodeData[j] = package[i];
             }
+            Console.WriteLine("________________________________________________________________________________");
             byte[] decodeData = BitStuffing.DecodeData(undecodeData);
             byte fcs = package[package.Length - 1];
             string fcsLine = BitStuffing.ConvertBytesToBinaryString(new byte[] { fcs });
@@ -103,12 +106,25 @@ namespace Lab1_1
             }
             if (count % 2 == 1)
             {
-                this.Invoke((MethodInvoker)(delegate 
+                this.Invoke((MethodInvoker)(delegate
                 {
                     listView2.Text = "Transfer bytes error";
                 }));
             }
             return decodeData;
+        }
+        private void Debug(byte[] bytesSent)
+        {
+            Console.WriteLine("Flag: " + bytesSent[0]);
+            Console.WriteLine("Destination addres: " + bytesSent[1]);
+            Console.WriteLine("Source addres: " + bytesSent[2]);
+            Console.WriteLine("Data size: " + bytesSent[3]);
+            for (int i = 4; i < 4 + bytesSent[3]; i++)
+            {
+                Console.Write(bytesSent[i] + " ");
+            }
+            Console.WriteLine();
+            Console.WriteLine("FCS: " + bytesSent[4 + bytesSent[3]]);
         }
         private void SendData()
         {
@@ -117,12 +133,13 @@ namespace Lab1_1
                 Thread.Sleep(100);
             }
 
-
             byte[] package = CreatePackage(textBox1.Text);
             if (package != null)
             {
                 serialPort.RtsEnable = true;
                 byte[] bytesSent = CreatePackage(textBox1.Text);
+                Console.WriteLine("Write");
+                Debug(bytesSent);
                 serialPort.Write(bytesSent, 0, bytesSent.Length);
                 Thread.Sleep(100);
                 serialPort.RtsEnable = false;
@@ -171,9 +188,13 @@ namespace Lab1_1
             {
                 this.Invoke((MethodInvoker)(delegate()
                 {
-                    string message = serialPort.ReadExisting();
-                    byte[] bytes = System.Text.Encoding.UTF8.GetBytes(message); 
-                    
+
+                    /* string message = serialPort.ReadExisting();
+                    byte[] bytes = System.Text.Encoding.UTF8.GetBytes(message);*/
+                    int size = serialPort.BytesToRead;
+                    Console.WriteLine("Received size: " + size);
+                    byte[] bytes = new byte[size];
+                    serialPort.Read(bytes, 0, bytes.Length);
                     if (bytes.Length == 1 && bytes[0] == 0x13)
                     {
                         xOn = false;
@@ -184,6 +205,8 @@ namespace Lab1_1
                     }
                     else
                     {
+                        Console.WriteLine("Receive data");
+                        Debug(bytes);
                         byte[] decodeData = ParsePackage(bytes);
                         listView2.Items.Add("Bytes recieved:" + decodeData.Length);
                         textBox2.Text += Encoding.UTF8.GetString(decodeData, 0, decodeData.Length) + "\r\n";
