@@ -39,7 +39,6 @@
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
-            this.listView2 = new System.Windows.Forms.ListView();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
@@ -48,6 +47,7 @@
             this.textBox2 = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.label12 = new System.Windows.Forms.Label();
+            this.textBox3 = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // textBox1
@@ -163,15 +163,6 @@
             this.label8.TabIndex = 18;
             this.label8.Text = "StopBits:";
             // 
-            // listView2
-            // 
-            this.listView2.Location = new System.Drawing.Point(556, 28);
-            this.listView2.Name = "listView2";
-            this.listView2.Size = new System.Drawing.Size(522, 198);
-            this.listView2.TabIndex = 24;
-            this.listView2.UseCompatibleStateImageBehavior = false;
-            this.listView2.View = System.Windows.Forms.View.List;
-            // 
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
@@ -246,11 +237,20 @@
             this.label12.TabIndex = 32;
             this.label12.Text = "Debug: ";
             // 
+            // textBox3
+            // 
+            this.textBox3.Location = new System.Drawing.Point(559, 28);
+            this.textBox3.Multiline = true;
+            this.textBox3.Name = "textBox3";
+            this.textBox3.Size = new System.Drawing.Size(498, 198);
+            this.textBox3.TabIndex = 33;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1095, 458);
+            this.Controls.Add(this.textBox3);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.textBox2);
@@ -259,7 +259,6 @@
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.checkBox1);
-            this.Controls.Add(this.listView2);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.label6);
@@ -294,7 +293,6 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.ListView listView2;
         private System.Windows.Forms.CheckBox checkBox1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
@@ -303,6 +301,7 @@
         private System.Windows.Forms.TextBox textBox2;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.TextBox textBox3;
     }
 }
 

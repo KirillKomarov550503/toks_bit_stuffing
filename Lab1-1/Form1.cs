@@ -35,13 +35,8 @@ namespace Lab1_1
             label12.Text = "Debug:";
             textBox2.ReadOnly = true;
 
-            listView2.Scrollable = true;
-            listView2.View = View.Details;
-            ColumnHeader header2 = new ColumnHeader();
-            header2.Width = listView2.Width;
-            header2.Text = "Debug information: ";
-            listView2.Columns.Add(header2);
-            listView2.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
+            textBox3.ReadOnly = true;
+            textBox3.ScrollBars = ScrollBars.Both;
         }
 
         private Boolean xOn = false;
@@ -58,7 +53,7 @@ namespace Lab1_1
             {
                 this.Invoke((MethodInvoker)(delegate
                 {
-                    listView2.Items.Add("Data length more than 256 bytes");
+                    textBox3.Text += "Data length more than 256 bytes" + "\r\n";
                 }));
                 return null;
             }
@@ -86,13 +81,10 @@ namespace Lab1_1
             byte sourceAddres = package[2];
             byte dataSize = package[3];
             byte[] undecodeData = new byte[dataSize];
-            Console.WriteLine("Parse package: ");
             for (int i = 4, j = 0; i < 4 + dataSize; i++, j++)
             {
-                Console.Write(package[i] + " ");
                 undecodeData[j] = package[i];
             }
-            Console.WriteLine("________________________________________________________________________________");
             byte[] decodeData = BitStuffing.DecodeData(undecodeData);
             byte fcs = package[package.Length - 1];
             string fcsLine = BitStuffing.ConvertBytesToBinaryString(new byte[] { fcs });
@@ -108,24 +100,12 @@ namespace Lab1_1
             {
                 this.Invoke((MethodInvoker)(delegate
                 {
-                    listView2.Text = "Transfer bytes error";
+                    textBox3.Text += "Transfer bytes error" + "\r\n";
                 }));
             }
             return decodeData;
         }
-        private void Debug(byte[] bytesSent)
-        {
-            Console.WriteLine("Flag: " + bytesSent[0]);
-            Console.WriteLine("Destination addres: " + bytesSent[1]);
-            Console.WriteLine("Source addres: " + bytesSent[2]);
-            Console.WriteLine("Data size: " + bytesSent[3]);
-            for (int i = 4; i < 4 + bytesSent[3]; i++)
-            {
-                Console.Write(bytesSent[i] + " ");
-            }
-            Console.WriteLine();
-            Console.WriteLine("FCS: " + bytesSent[4 + bytesSent[3]]);
-        }
+        
         private void SendData()
         {
             while (!xOn)
@@ -138,8 +118,6 @@ namespace Lab1_1
             {
                 serialPort.RtsEnable = true;
                 byte[] bytesSent = CreatePackage(textBox1.Text);
-                Console.WriteLine("Write");
-                Debug(bytesSent);
                 serialPort.Write(bytesSent, 0, bytesSent.Length);
                 Thread.Sleep(100);
                 serialPort.RtsEnable = false;
@@ -148,7 +126,7 @@ namespace Lab1_1
                 this.Invoke((MethodInvoker)(delegate
                 {
                     textBox1.Text = "";
-                    listView2.Items.Add("Bytes sent:" + bytesSent.Length);
+                    textBox3.Text += "Bytes sent:" + bytesSent.Length + "\r\n";
                 }));
             }
         }
@@ -171,28 +149,24 @@ namespace Lab1_1
             }
             catch (Exception ex)
             {
-                listView2.Items.Add("Error in port connection");
+                textBox3.Text += "Error in port connection" + "\r\n";
             }
             if (serialPort.IsOpen)
             {
                 comboBox1.Enabled = false;
 
-                listView2.Items.Add("Port is opened");
-                listView2.Items.Add("Parity: " + label3.Text);
-                listView2.Items.Add("COM port: " + comboBox1.SelectedItem);
-                listView2.Items.Add("Baudrate: " + label10.Text);
-                listView2.Items.Add("StopBits: " + label2.Text);
-                listView2.Items.Add("DataBits: " + label9.Text);
+                textBox3.Text += "Port is opened" + "\r\n";
+                textBox3.Text += "Parity: " + label3.Text + "\r\n";
+                textBox3.Text += "COM port: " + comboBox1.SelectedItem + "\r\n";
+                textBox3.Text += "Baudrate: " + label10.Text + "\r\n";
+                textBox3.Text += "StopBits: " + label2.Text + "\r\n";
+                textBox3.Text += "DataBits: " + label9.Text + "\r\n";
             }
             serialPort.DataReceived += delegate
             {
                 this.Invoke((MethodInvoker)(delegate()
                 {
-
-                    /* string message = serialPort.ReadExisting();
-                    byte[] bytes = System.Text.Encoding.UTF8.GetBytes(message);*/
                     int size = serialPort.BytesToRead;
-                    Console.WriteLine("Received size: " + size);
                     byte[] bytes = new byte[size];
                     serialPort.Read(bytes, 0, bytes.Length);
                     if (bytes.Length == 1 && bytes[0] == 0x13)
@@ -205,10 +179,8 @@ namespace Lab1_1
                     }
                     else
                     {
-                        Console.WriteLine("Receive data");
-                        Debug(bytes);
                         byte[] decodeData = ParsePackage(bytes);
-                        listView2.Items.Add("Bytes recieved:" + decodeData.Length);
+                        textBox3.Text += "Bytes recieved:" + decodeData.Length + "\r\n";
                         textBox2.Text += Encoding.UTF8.GetString(decodeData, 0, decodeData.Length) + "\r\n";
                     }
 
@@ -225,7 +197,7 @@ namespace Lab1_1
                 Thread thread = new Thread(SendData);
                 thread.Start();
             }
-            else listView2.Items.Add("To send message connect ports first!");
+            else textBox3.Text += "To send message connect ports first!" + "\r\n";
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -233,7 +205,7 @@ namespace Lab1_1
             if (serialPort != null && serialPort.IsOpen)
             {
                 serialPort.Close();
-                listView2.Items.Add("Port is closed");
+                textBox3.Text += "Port is closed" + "\r\n";
                 button1.Enabled = true;
             }
             comboBox1.Visible = true;
@@ -244,8 +216,6 @@ namespace Lab1_1
         {
             try
             {
-
-                Console.WriteLine("State: " + checkBox1.CheckState);
                 if (checkBox1.CheckState == CheckState.Checked)
                 {
                     var xOnByte = new byte[] { 0x11 };
@@ -265,7 +235,7 @@ namespace Lab1_1
             }
             catch (Exception ex)
             {
-                listView2.Items.Add("You aren't connected to any port");
+                textBox3.Text += "You aren't connected to any port" + "\r\n";
             }
         }
 

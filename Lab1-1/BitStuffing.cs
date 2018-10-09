@@ -64,7 +64,7 @@ namespace Lab1_1
             int diff = bits.Length - modifiedBits.Length;
             if (diff > 0)
             {
-                resultStr = modifiedBits.Substring(0, 8 * (bytes.Length - 1));
+                resultStr = modifiedBits.Substring(0, 8 * (modifiedBits.Length / 8));
             }
             else
             {
