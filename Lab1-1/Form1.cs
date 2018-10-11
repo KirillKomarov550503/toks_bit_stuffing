@@ -9,8 +9,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO.Ports;
 using System.Threading;
-
-
+using System.Collections;
+using System.IO;
 namespace Lab1_1
 {
     public partial class
@@ -18,6 +18,7 @@ namespace Lab1_1
         Form1 : Form
     {
         private SerialPort serialPort;
+
         public Form1()
         {
             InitializeComponent();
@@ -31,41 +32,134 @@ namespace Lab1_1
             label9.Text = "8";
             label3.Text = "None";
             label2.Text = "1";
-
-            listView1.Scrollable = true;
-            listView1.View = View.Details;
-            ColumnHeader columnHeader = new ColumnHeader();
-            columnHeader.Width = listView1.Width;
-            columnHeader.Text = "Output: ";
-            listView1.Columns.Add(columnHeader);
-
-            listView2.Scrollable = true;
-            listView2.View = View.Details;
-            ColumnHeader header2 = new ColumnHeader();
-            header2.Width = listView2.Width;
-            header2.Text = "Debug information: ";
-            listView2.Columns.Add(header2);
+            label11.Text = "Input:";
+            label12.Text = "Debug:";
+            textBox2.ReadOnly = true;
+            textBox4.Text = "0";
+            textBox3.ReadOnly = true;
+            textBox3.ScrollBars = ScrollBars.Both;
         }
 
         private Boolean xOn = false;
-        private void sendData()
+
+        private byte[] CreatePackage(string message)
+        {
+            byte flag = Convert.ToByte("01011010", 2);
+            long address = Convert.ToInt64(textBox4.Text);
+            if (address < 0 || address > 255)
+            {
+                this.Invoke((MethodInvoker)(delegate
+                {
+                    textBox3.Text += "Destination address must be between 0 and 255" + "\r\n";
+                }));
+                return null;
+            }
+
+            byte destinationAddres = Convert.ToByte(textBox4.Text);
+            byte sourceAddres = Convert.ToByte("00000000", 2);
+
+            byte[] bytesSent = System.Text.Encoding.ASCII.GetBytes(message);
+            byte[] addresses = new byte[] { destinationAddres, sourceAddres, (byte)bytesSent.Length };
+            List<byte> addressList = new List<byte>(addresses);
+            List<byte> bytesSentList = new List<byte>(bytesSent);
+            addressList.AddRange(bytesSentList);
+            if (bytesSent.Length > 255)
+            {
+                this.Invoke((MethodInvoker)(delegate
+                {
+                    textBox3.Text += "Data length more than 256 bytes" + "\r\n";
+                }));
+                return null;
+            }
+            byte[] dataAfterStuffing = BitStuffing.CodeData(addressList.ToArray());
+            byte dataSize = (byte)dataAfterStuffing.Length;
+            Console.WriteLine("Data size: " + dataSize);
+            byte fcs = Convert.ToByte("11111111", 2);
+
+            byte[] firstPart = new byte[] { flag};
+            byte[] lastPart = new byte[] { fcs };
+            List<byte> firstList = new List<byte>(firstPart);
+            List<byte> middleList = new List<byte>(dataAfterStuffing);
+            List<byte> lastList = new List<byte>(lastPart);
+            firstList.AddRange(middleList);
+            firstList.AddRange(lastPart);
+            byte[] package = firstList.ToArray();
+            return package;
+        }
+        private void PrintBytes(byte[] package, string debugMessage)
+        {
+            this.Invoke((MethodInvoker)(delegate
+            {
+                textBox3.Text += debugMessage + ": ";
+                foreach (byte bt in package)
+                {
+                    textBox3.Text += Convert.ToString(bt) + " ";
+                }
+                textBox3.Text += "\r\n";
+            }));
+        }
+        private byte[] ParsePackage(byte[] package)
+        {
+            PrintBytes(package, "Received package");
+            byte flag;
+            if (package[0] == Convert.ToByte("01011010", 2))
+            {
+                flag = package[0];
+            }
+            byte[] undecodeData = new byte[package.Length - 2];
+            for (int i = 1, j = 0; i < package.Length - 1; i++, j++)
+            {
+                undecodeData[j] = package[i];
+            }
+            byte[] decodeData = BitStuffing.DecodeData(undecodeData);
+            byte destinationAddress = decodeData[0];
+            byte sourceAddress = decodeData[1];
+            byte dataSize = decodeData[2];
+            byte[] data = new byte[dataSize];
+            for (int i = 3, j = 0; i < decodeData.Length; i++, j++)
+            {
+                data[j] = decodeData[i];
+            }
+            /*byte destinationAddres = package[1];
+            byte sourceAddres = package[2];
+            byte dataSize = package[3];
+            byte[] undecodeData = new byte[dataSize];
+            for (int i = 4, j = 0; i < 4 + dataSize; i++, j++)
+            {
+                undecodeData[j] = package[i];
+            }
+            byte[] decodeData = BitStuffing.DecodeData(undecodeData);*/
+            byte fcs = package[package.Length - 1];
+            return data;
+        }
+
+        private void SendData()
         {
             while (!xOn)
             {
                 Thread.Sleep(100);
             }
 
-            serialPort.RtsEnable = true;
-            serialPort.Write(textBox1.Text);
-            Thread.Sleep(100);
-            serialPort.RtsEnable = false;
-
-            byte[] bytesSent = System.Text.Encoding.ASCII.GetBytes(textBox1.Text);
-            this.Invoke((MethodInvoker)(delegate
+            byte[] package = CreatePackage(textBox1.Text);
+            if (package != null)
             {
-                textBox1.Text = "";
-                listView2.Items.Add("Bytes sent:" + bytesSent.Length);
-            }));
+
+                byte[] bytesSent = CreatePackage(textBox1.Text);
+                if (bytesSent != null)
+                {
+                    serialPort.Write(bytesSent, 0, bytesSent.Length);
+                    serialPort.RtsEnable = true;
+                    Thread.Sleep(100);
+                    serialPort.RtsEnable = false;
+                    this.Invoke((MethodInvoker)(delegate
+                                        {
+                                            textBox1.Text = "";
+                                            textBox3.Text += "Bytes sent:" + bytesSent.Length + "\r\n";
+                                            PrintBytes(bytesSent, "Sent package");
+                                        }));
+                }
+
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -86,25 +180,26 @@ namespace Lab1_1
             }
             catch (Exception ex)
             {
-                listView2.Items.Add("Error in port connection");
+                textBox3.Text += "Error in port connection" + "\r\n";
             }
             if (serialPort.IsOpen)
             {
                 comboBox1.Enabled = false;
 
-                listView2.Items.Add("Port is opened");
-                listView2.Items.Add("Parity: " + label3.Text);
-                listView2.Items.Add("COM port: " + comboBox1.SelectedItem);
-                listView2.Items.Add("Baudrate: " + label10.Text);
-                listView2.Items.Add("StopBits: " + label2.Text);
-                listView2.Items.Add("DataBits: " + label9.Text);
+                textBox3.Text += "Port is opened" + "\r\n";
+                textBox3.Text += "Parity: " + label3.Text + "\r\n";
+                textBox3.Text += "COM port: " + comboBox1.SelectedItem + "\r\n";
+                textBox3.Text += "Baudrate: " + label10.Text + "\r\n";
+                textBox3.Text += "StopBits: " + label2.Text + "\r\n";
+                textBox3.Text += "DataBits: " + label9.Text + "\r\n";
             }
             serialPort.DataReceived += delegate
             {
                 this.Invoke((MethodInvoker)(delegate()
                 {
-                    string message = serialPort.ReadExisting();
-                    byte[] bytes = System.Text.Encoding.ASCII.GetBytes(message);
+                    int size = serialPort.BytesToRead;
+                    byte[] bytes = new byte[size];
+                    serialPort.Read(bytes, 0, bytes.Length);
                     if (bytes.Length == 1 && bytes[0] == 0x13)
                     {
                         xOn = false;
@@ -115,8 +210,9 @@ namespace Lab1_1
                     }
                     else
                     {
-                        listView2.Items.Add("Bytes recieved:" + bytes.Length);
-                        listView1.Items.Add(message);
+                        byte[] decodeData = ParsePackage(bytes);
+                        textBox3.Text += "Bytes recieved:" + bytes.Length + "\r\n";
+                        textBox2.Text += Encoding.UTF8.GetString(decodeData, 0, decodeData.Length) + "\r\n";
                     }
 
                 }));
@@ -129,10 +225,10 @@ namespace Lab1_1
         {
             if (serialPort.IsOpen && serialPort.BytesToRead == 0)
             {
-                Thread thread = new Thread(sendData);
+                Thread thread = new Thread(SendData);
                 thread.Start();
             }
-            else listView2.Items.Add("To send message connect ports first!");
+            else textBox3.Text += "To send message connect ports first!" + "\r\n";
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -140,7 +236,7 @@ namespace Lab1_1
             if (serialPort != null && serialPort.IsOpen)
             {
                 serialPort.Close();
-                listView2.Items.Add("Port is closed");
+                textBox3.Text += "Port is closed" + "\r\n";
                 button1.Enabled = true;
             }
             comboBox1.Visible = true;
@@ -151,8 +247,6 @@ namespace Lab1_1
         {
             try
             {
-
-                Console.WriteLine("State: " + checkBox1.CheckState);
                 if (checkBox1.CheckState == CheckState.Checked)
                 {
                     var xOnByte = new byte[] { 0x11 };
@@ -172,16 +266,10 @@ namespace Lab1_1
             }
             catch (Exception ex)
             {
-                listView2.Items.Add("You aren't connected to any port");
+                textBox3.Text += "You aren't connected to any port" + "\r\n";
             }
         }
 
-        private void label9_Click(object sender, EventArgs e)
-        {
-
-        }
-
-       
     }
 }
 
