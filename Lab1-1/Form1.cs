@@ -18,6 +18,7 @@ namespace Lab1_1
         Form1 : Form
     {
         private SerialPort serialPort;
+
         public Form1()
         {
             InitializeComponent();
@@ -34,7 +35,7 @@ namespace Lab1_1
             label11.Text = "Input:";
             label12.Text = "Debug:";
             textBox2.ReadOnly = true;
-
+            textBox4.Text = "0";
             textBox3.ReadOnly = true;
             textBox3.ScrollBars = ScrollBars.Both;
         }
@@ -44,12 +45,25 @@ namespace Lab1_1
         private byte[] CreatePackage(string message)
         {
             byte flag = Convert.ToByte("01011010", 2);
-            byte destinationAddres = Convert.ToByte("00000000", 2);
+            long address = Convert.ToInt64(textBox4.Text);
+            if (address < 0 || address > 255)
+            {
+                this.Invoke((MethodInvoker)(delegate
+                {
+                    textBox3.Text += "Destination address must be between 0 and 255" + "\r\n";
+                }));
+                return null;
+            }
+
+            byte destinationAddres = Convert.ToByte(textBox4.Text);
             byte sourceAddres = Convert.ToByte("00000000", 2);
+
             byte[] bytesSent = System.Text.Encoding.ASCII.GetBytes(message);
-            byte[] dataAfterStuffing = BitStuffing.CodeData(bytesSent);
-            byte dataSize = (byte)dataAfterStuffing.Length;
-            if (dataSize > 255)
+            byte[] addresses = new byte[] { destinationAddres, sourceAddres, (byte)bytesSent.Length };
+            List<byte> addressList = new List<byte>(addresses);
+            List<byte> bytesSentList = new List<byte>(bytesSent);
+            addressList.AddRange(bytesSentList);
+            if (bytesSent.Length > 255)
             {
                 this.Invoke((MethodInvoker)(delegate
                 {
@@ -57,9 +71,12 @@ namespace Lab1_1
                 }));
                 return null;
             }
+            byte[] dataAfterStuffing = BitStuffing.CodeData(addressList.ToArray());
+            byte dataSize = (byte)dataAfterStuffing.Length;
+            Console.WriteLine("Data size: " + dataSize);
             byte fcs = Convert.ToByte("11111111", 2);
 
-            byte[] firstPart = new byte[] { flag, destinationAddres, sourceAddres, dataSize };
+            byte[] firstPart = new byte[] { flag};
             byte[] lastPart = new byte[] { fcs };
             List<byte> firstList = new List<byte>(firstPart);
             List<byte> middleList = new List<byte>(dataAfterStuffing);
@@ -69,15 +86,41 @@ namespace Lab1_1
             byte[] package = firstList.ToArray();
             return package;
         }
-
+        private void PrintBytes(byte[] package, string debugMessage)
+        {
+            this.Invoke((MethodInvoker)(delegate
+            {
+                textBox3.Text += debugMessage + ": ";
+                foreach (byte bt in package)
+                {
+                    textBox3.Text += Convert.ToString(bt) + " ";
+                }
+                textBox3.Text += "\r\n";
+            }));
+        }
         private byte[] ParsePackage(byte[] package)
         {
+            PrintBytes(package, "Received package");
             byte flag;
             if (package[0] == Convert.ToByte("01011010", 2))
             {
                 flag = package[0];
             }
-            byte destinationAddres = package[1];
+            byte[] undecodeData = new byte[package.Length - 2];
+            for (int i = 1, j = 0; i < package.Length - 1; i++, j++)
+            {
+                undecodeData[j] = package[i];
+            }
+            byte[] decodeData = BitStuffing.DecodeData(undecodeData);
+            byte destinationAddress = decodeData[0];
+            byte sourceAddress = decodeData[1];
+            byte dataSize = decodeData[2];
+            byte[] data = new byte[dataSize];
+            for (int i = 3, j = 0; i < decodeData.Length; i++, j++)
+            {
+                data[j] = decodeData[i];
+            }
+            /*byte destinationAddres = package[1];
             byte sourceAddres = package[2];
             byte dataSize = package[3];
             byte[] undecodeData = new byte[dataSize];
@@ -85,27 +128,11 @@ namespace Lab1_1
             {
                 undecodeData[j] = package[i];
             }
-            byte[] decodeData = BitStuffing.DecodeData(undecodeData);
+            byte[] decodeData = BitStuffing.DecodeData(undecodeData);*/
             byte fcs = package[package.Length - 1];
-            string fcsLine = BitStuffing.ConvertBytesToBinaryString(new byte[] { fcs });
-            int count = 0;
-            for (int i = 0; i < fcsLine.Length; i++)
-            {
-                if (fcsLine[i] == '1')
-                {
-                    count++;
-                }
-            }
-            if (count % 2 == 1)
-            {
-                this.Invoke((MethodInvoker)(delegate
-                {
-                    textBox3.Text += "Transfer bytes error" + "\r\n";
-                }));
-            }
-            return decodeData;
+            return data;
         }
-        
+
         private void SendData()
         {
             while (!xOn)
@@ -116,18 +143,22 @@ namespace Lab1_1
             byte[] package = CreatePackage(textBox1.Text);
             if (package != null)
             {
-                serialPort.RtsEnable = true;
+
                 byte[] bytesSent = CreatePackage(textBox1.Text);
-                serialPort.Write(bytesSent, 0, bytesSent.Length);
-                Thread.Sleep(100);
-                serialPort.RtsEnable = false;
-
-
-                this.Invoke((MethodInvoker)(delegate
+                if (bytesSent != null)
                 {
-                    textBox1.Text = "";
-                    textBox3.Text += "Bytes sent:" + bytesSent.Length + "\r\n";
-                }));
+                    serialPort.Write(bytesSent, 0, bytesSent.Length);
+                    serialPort.RtsEnable = true;
+                    Thread.Sleep(100);
+                    serialPort.RtsEnable = false;
+                    this.Invoke((MethodInvoker)(delegate
+                                        {
+                                            textBox1.Text = "";
+                                            textBox3.Text += "Bytes sent:" + bytesSent.Length + "\r\n";
+                                            PrintBytes(bytesSent, "Sent package");
+                                        }));
+                }
+
             }
         }
 
@@ -180,7 +211,7 @@ namespace Lab1_1
                     else
                     {
                         byte[] decodeData = ParsePackage(bytes);
-                        textBox3.Text += "Bytes recieved:" + decodeData.Length + "\r\n";
+                        textBox3.Text += "Bytes recieved:" + bytes.Length + "\r\n";
                         textBox2.Text += Encoding.UTF8.GetString(decodeData, 0, decodeData.Length) + "\r\n";
                     }
 

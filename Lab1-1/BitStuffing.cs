@@ -8,15 +8,6 @@ namespace Lab1_1
 {
     class BitStuffing
     {
-        private static void PrintBytes(byte[] bytes)
-        {
-            Console.Write("Bytes: ");
-            foreach (byte bt in bytes)
-            {
-                Console.Write(bt + " ");
-            }
-            Console.WriteLine("\n_________________________________________");
-        }
         public static byte[] ConvertBinaryStrToByteArray(string binaryStr)
         {
 
@@ -29,7 +20,6 @@ namespace Lab1_1
                 }
             }
             int numberOfBytes = binaryStr.Length / 8;
-            Console.WriteLine("Binary str after cal: " + binaryStr);
             byte[] bytes = new byte[numberOfBytes];
             for (int i = 0; i < numberOfBytes; i++)
             {
