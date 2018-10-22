@@ -40,8 +40,8 @@ namespace Lab1_1
         public static byte[] CodeData(byte[] bytes)
         {
             string bits = ConvertBytesToBinaryString(bytes);
-            string bitSeq = "0101101";
-            string bitStuff = "01011011";
+            string bitSeq = "0110000";
+            string bitStuff = "01100000";
             string modifiedString = bits.Replace(bitSeq, bitStuff);
             return ConvertBinaryStrToByteArray(modifiedString);
         }
@@ -49,7 +49,7 @@ namespace Lab1_1
         public static byte[] DecodeData(byte[] bytes)
         {
             string bits = ConvertBytesToBinaryString(bytes);
-            string modifiedBits = bits.Replace("01011011", "0101101");
+            string modifiedBits = bits.Replace("01100000", "0110000");
             string resultStr;
             int diff = bits.Length - modifiedBits.Length;
             if (diff > 0)
