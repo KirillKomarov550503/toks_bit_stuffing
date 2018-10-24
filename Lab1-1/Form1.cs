@@ -58,7 +58,7 @@ namespace Lab1_1
                 return null;
             }
             byte destinationByte = Convert.ToByte(textBox4.Text.Length > 0 ? textBox4.Text : "0");
-            byte sourceByte = Convert.ToByte(textBox5.Text.Length > 0 ? textBox5.Text : "0");
+            byte sourceByte = (byte) sourceAddress;
 
             byte[] bytesSent = System.Text.Encoding.ASCII.GetBytes(message);
             byte[] addresses = new byte[] { destinationByte, sourceByte, (byte)bytesSent.Length };
