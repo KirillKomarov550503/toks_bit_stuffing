@@ -32,14 +32,14 @@ namespace Lab1_1
             label9.Text = "8";
             label3.Text = "None";
             label2.Text = "1";
-            label11.Text = "Input:";
+            label11.Text = "Output:";
             label12.Text = "Debug:";
             textBox2.ReadOnly = true;
             textBox4.Text = "0";
             textBox5.Text = "0";
             textBox3.ReadOnly = true;
-            textBox4.ReadOnly = true;
-            button3.Text = "Send address";
+
+
             textBox3.ScrollBars = ScrollBars.Both;
         }
 
@@ -57,9 +57,25 @@ namespace Lab1_1
                 }));
                 return null;
             }
-            byte destinationByte = Convert.ToByte(textBox4.Text.Length > 0 ? textBox4.Text : "0");
-            byte sourceByte = (byte) sourceAddress;
-
+            long destinationAddress = Convert.ToInt64(textBox4.Text.Length > 0 ? textBox4.Text : "0");
+            if (destinationAddress < 0 || destinationAddress > 255)
+            {
+                this.Invoke((MethodInvoker)(delegate
+                {
+                    textBox3.Text += "Source address must be between 0 and 255" + "\r\n";
+                }));
+                return null;
+            }
+            byte destinationByte = (byte)destinationAddress;
+            byte sourceByte = (byte)sourceAddress;
+            if (destinationByte == sourceByte)
+            {
+                this.Invoke((MethodInvoker)(delegate
+                {
+                    textBox3.Text += "Source and destinations addresses can't be equals";
+                }));
+                return null;
+            }
             byte[] bytesSent = System.Text.Encoding.ASCII.GetBytes(message);
             byte[] addresses = new byte[] { destinationByte, sourceByte, (byte)bytesSent.Length };
             List<byte> addressList = new List<byte>(addresses);
@@ -108,7 +124,6 @@ namespace Lab1_1
         }
         private byte[] ParsePackage(byte[] package)
         {
-            PrintBytes(package, "Received package");
             byte flag = 0;
             if (package[0] == Convert.ToByte("01100001", 2))
             {
@@ -121,6 +136,14 @@ namespace Lab1_1
             }
             byte[] decodeData = BitStuffing.DecodeData(undecodeData);
             byte destinationAddress = decodeData[0];
+            if (destinationAddress != Convert.ToByte(textBox5.Text.Length > 0 ? textBox5.Text : "0"))
+            {
+                return null;
+            }
+            this.Invoke((MethodInvoker)(delegate
+            {
+
+            }));
             byte sourceAddress = decodeData[1];
             byte dataSize = decodeData[2];
             byte[] data = new byte[dataSize];
@@ -222,8 +245,12 @@ namespace Lab1_1
                     else
                     {
                         byte[] decodeData = ParsePackage(bytes);
-                        textBox3.Text += "Bytes recieved:" + bytes.Length + "\r\n";
-                        textBox2.Text += Encoding.UTF8.GetString(decodeData, 0, decodeData.Length) + "\r\n";
+                        if (decodeData != null)
+                        {
+                            PrintBytes(bytes, "Received package");
+                            textBox3.Text += "Bytes recieved:" + bytes.Length + "\r\n";
+                            textBox2.Text += Encoding.UTF8.GetString(decodeData, 0, decodeData.Length) + "\r\n";
+                        }
                     }
 
                 }));
@@ -281,30 +308,7 @@ namespace Lab1_1
             }
         }
 
-        private void button3_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                long sourceAddress = Convert.ToInt64(textBox5.Text.Length > 0 ? textBox5.Text : "0");
-                if (sourceAddress < 0 || sourceAddress > 255)
-                {
-                    this.Invoke((MethodInvoker)(delegate
-                    {
-                        textBox3.Text += "Source address must be between 0 and 255" + "\r\n";
-                    }));
-                    return;
-                }
-                var xOnByte = new byte[] { 0x15, (byte)sourceAddress };
-                serialPort.RtsEnable = true;
-                serialPort.Write(xOnByte, 0, 2);
-                Thread.Sleep(100);
-                serialPort.RtsEnable = false;
-            }
-            catch (Exception ex)
-            {
-                textBox3.Text += "You aren't connected to any port" + "\r\n";
-            }
-        }
+
 
     }
 }
