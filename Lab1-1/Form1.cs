@@ -72,11 +72,11 @@ namespace Lab1_1
             {
                 this.Invoke((MethodInvoker)(delegate
                 {
-                    textBox3.Text += "Source and destinations addresses can't be equals";
+                    textBox3.Text += "Source and destinations addresses can't be equals\r\n";
                 }));
                 return null;
             }
-            byte[] bytesSent = System.Text.Encoding.ASCII.GetBytes(message);
+            byte[] bytesSent = Encoding.ASCII.GetBytes(message);
             byte[] addresses = new byte[] { destinationByte, sourceByte, (byte)bytesSent.Length };
             List<byte> addressList = new List<byte>(addresses);
             List<byte> bytesSentList = new List<byte>(bytesSent);
@@ -98,7 +98,7 @@ namespace Lab1_1
             List<byte> lastListBefore = new List<byte>(new byte[] { fcs });
             firstListBefore.AddRange(middleListBefore);
             firstListBefore.AddRange(lastListBefore);
-            PrintBytes(firstListBefore.ToArray(), "Package before stuffing");
+
 
             byte[] firstPart = new byte[] { flag };
             byte[] lastPart = new byte[] { fcs };
@@ -140,25 +140,15 @@ namespace Lab1_1
             {
                 return null;
             }
-            this.Invoke((MethodInvoker)(delegate
-            {
-
-            }));
-            byte sourceAddress = decodeData[1];
-            byte dataSize = decodeData[2];
-            byte[] data = new byte[dataSize];
-            for (int i = 3, j = 0; i < decodeData.Length; i++, j++)
-            {
-                data[j] = decodeData[i];
-            }
 
             byte fcs = package[package.Length - 1];
-            List<byte> firstListBefore = new List<byte>(new byte[] { flag, destinationAddress, sourceAddress });
-            List<byte> middleListBefore = new List<byte>(data);
+            List<byte> firstListBefore = new List<byte>(new byte[] { flag });
+            List<byte> middleListBefore = new List<byte>(decodeData);
             List<byte> lastListBefore = new List<byte>(new byte[] { fcs });
             firstListBefore.AddRange(middleListBefore);
             firstListBefore.AddRange(lastListBefore);
-            PrintBytes(firstListBefore.ToArray(), "Package after remove bits stuffing");
+            byte[] data = firstListBefore.ToArray();
+
             return data;
         }
 
